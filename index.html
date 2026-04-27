@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApostaWatch — Dashboard Analítico</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090f; --surface:#0f1017; --card:#14141e; --card2:#1b1b28;
+  --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.14);
+  --r:#f04040; --y:#f5b731; --o:#e06820; --g:#2dd4a8; --b:#6c8fff;
+  --purple:#7c70f5; --teal:#2dd4bf; --amber:#fbbf24; --red:#f87171; --green:#4ade80;
+  --text:#f0eee9; --sec:#c5c2ba; --muted:#7a7888; --faint:#252535;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:18px; --radius-xl:26px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.6;overflow-x:hidden}
+
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(108,143,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(108,143,255,.025) 1px,transparent 1px);
+  background-size:52px 52px;
+  pointer-events:none;z-index:0;
+}
+
+/* ══════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════ */
+.navbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(9,9,15,.85);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  height:62px;
+  display:flex;align-items:center;
+  padding:0 6vw;
+  gap:0;
+}
+.nav-brand{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Fraunces',serif;
+  font-size:1.15rem;font-weight:700;
+  color:var(--text);text-decoration:none;
+  margin-right:40px;flex-shrink:0;
+}
+.nav-brand-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--r);
+  box-shadow:0 0 8px var(--r);
+}
+.nav-links{display:flex;align-items:center;gap:4px;flex:1}
+.nav-link{
+  font-size:.82rem;font-weight:500;color:var(--muted);
+  text-decoration:none;padding:6px 14px;border-radius:8px;
+  transition:all .18s;white-space:nowrap;
+}
+.nav-link:hover{color:var(--sec);background:rgba(255,255,255,.05)}
+.nav-link.active{color:var(--text);background:rgba(255,255,255,.07)}
+.nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.nav-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  background:rgba(240,64,64,.1);color:var(--r);
+  padding:5px 12px;border-radius:100px;
+  border:1px solid rgba(240,64,64,.22);
+}
+.nav-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--r);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;border:none;background:none}
+.hamburger span{display:block;width:22px;height:2px;background:var(--sec);border-radius:2px;transition:all .2s}
+
+/* ══════════════════════════════════════
+   MOBILE NAV
+══════════════════════════════════════ */
+.mobile-menu{
+  display:none;position:fixed;top:62px;left:0;right:0;z-index:99;
+  background:rgba(14,14,22,.97);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:16px 6vw 20px;
+  flex-direction:column;gap:4px;
+}
+.mobile-menu.open{display:flex}
+.mobile-link{
+  font-size:.9rem;font-weight:500;color:var(--sec);
+  text-decoration:none;padding:10px 14px;border-radius:8px;transition:all .18s;
+}
+.mobile-link:hover{background:rgba(255,255,255,.06);color:var(--text)}
+
+/* ══════════════════════════════════════
+   HERO
+══════════════════════════════════════ */
+.hero{
+  position:relative;z-index:1;
+  padding:88px 7vw 68px;
+  border-bottom:1px solid var(--border);overflow:hidden;
+}
+.hero-glow{
+  position:absolute;top:-200px;left:-100px;
+  width:660px;height:660px;
+  background:radial-gradient(circle,rgba(240,64,64,.10) 0%,transparent 65%);
+  pointer-events:none;
+}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(240,64,64,.1);color:var(--r);
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  padding:6px 16px;border-radius:100px;
+  border:1px solid rgba(240,64,64,.24);margin-bottom:24px;
+}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:var(--r);animation:blink 2s infinite}
+.hero h1{
+  font-family:'Fraunces',serif;
+  font-size:clamp(2.4rem,5.8vw,4.6rem);
+  font-weight:700;line-height:1.05;letter-spacing:-.025em;
+  max-width:820px;margin-bottom:18px;
+}
+.hero h1 em{font-style:italic;color:var(--r)}
+.hero-lead{max-width:580px;color:var(--sec);font-size:1rem;font-weight:400;line-height:1.82;margin-bottom:38px}
+.meta{display:flex;flex-wrap:wrap;gap:20px}
+.meta span{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:500;color:var(--muted)}
+.meta span::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--g);flex-shrink:0}
+
+/* ══════════════════════════════════════
+   KPI STRIP
+══════════════════════════════════════ */
+.kpi-strip{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  border-bottom:1px solid var(--border);position:relative;z-index:1;
+}
+.kpi{padding:32px 26px;border-right:1px solid var(--border);transition:background .2s;cursor:default}
+.kpi:last-child{border-right:none}
+.kpi:hover{background:rgba(255,255,255,.018)}
+.kpi-bar{width:24px;height:3px;border-radius:2px;margin-bottom:14px}
+.kpi-val{font-family:'Fraunces',serif;font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:700;line-height:1;margin-bottom:6px}
+.kpi-lbl{font-size:.78rem;font-weight:500;color:var(--sec);line-height:1.5}
+
+/* ══════════════════════════════════════
+   SECTION LABELS
+══════════════════════════════════════ */
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:52px 7vw 34px;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:12px;position:relative;z-index:1;
+}
+.section-head h2{
+  font-family:'Fraunces',serif;
+  font-size:clamp(1.3rem,2.6vw,2rem);font-weight:700;letter-spacing:-.02em;
+}
+.section-head p{font-size:.83rem;color:var(--sec);max-width:340px;text-align:right;line-height:1.65}
+
+/* ══════════════════════════════════════
+   SLIDESHOW
+══════════════════════════════════════ */
+.ctrl-bar{
+  display:flex;align-items:center;gap:14px;
+  padding:0 7vw;height:64px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  position:sticky;top:62px;z-index:9;
+}
+.slide-tabs{display:flex;align-items:center;gap:4px;flex:1;overflow-x:auto;scrollbar-width:none}
+.slide-tabs::-webkit-scrollbar{display:none}
+.tab-btn{
+  height:34px;padding:0 16px;border-radius:8px;
+  border:1px solid transparent;
+  background:transparent;color:var(--muted);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.76rem;font-weight:600;letter-spacing:.03em;
+  cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0;
+}
+.tab-btn:hover{background:rgba(255,255,255,.05);color:var(--sec);border-color:var(--border)}
+.tab-btn.active{background:var(--r);color:#fff;border-color:var(--r)}
+.slide-counter{font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap;letter-spacing:.05em;flex-shrink:0}
+.arrows{display:flex;gap:6px;flex-shrink:0}
+.arrow-btn{
+  width:42px;height:42px;border-radius:10px;
+  background:var(--card);border:1.5px solid var(--border2);
+  color:var(--sec);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;transition:all .2s;
+}
+.arrow-btn:hover{background:var(--r);color:#fff;border-color:var(--r);transform:scale(1.06)}
+.arrow-btn:active{transform:scale(.96)}
+
+.slideshow{overflow:hidden;position:relative}
+.slides-track{display:flex;transition:transform .52s cubic-bezier(.77,0,.175,1)}
+.slide{min-width:100%;padding:52px 7vw 48px;background:var(--bg)}
+.slide-inner{max-width:960px;margin:0 auto}
+.slide-title{font-family:'Fraunces',serif;font-size:clamp(1.35rem,2.6vw,1.9rem);font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.slide-desc{font-size:.88rem;font-weight:400;color:var(--sec);margin-bottom:26px;max-width:640px;line-height:1.75}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px}
+.chart-wrap{position:relative;height:310px}
+.chart-wrap.sm{height:270px}
+.legend{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:500;color:var(--sec)}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.badge-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.badge{flex:1;min-width:100px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.badge-val{font-family:'Fraunces',serif;font-size:1.55rem;font-weight:700;color:var(--b);line-height:1}
+.badge-lbl{font-size:.7rem;font-weight:500;color:var(--sec);margin-top:4px;line-height:1.4}
+.alert-box{background:rgba(240,64,64,.07);border:1px solid rgba(240,64,64,.2);border-radius:12px;padding:13px 18px;font-size:.83rem;font-weight:400;color:var(--sec);line-height:1.7;margin-top:18px}
+.alert-box strong{color:var(--r);font-weight:600}
+.src-note{margin-top:16px;font-size:.7rem;color:var(--muted);border-top:1px solid var(--border);padding-top:12px}
+
+/* ══════════════════════════════════════
+   AVALIADOR DE RISCO — INTEGRADO
+══════════════════════════════════════ */
+.avaliador-section{
+  padding:72px 7vw 80px;
+  border-top:1px solid var(--border);
+  position:relative;z-index:1;
+}
+
+/* Intro block */
+.avaliador-intro{
+  display:grid;grid-template-columns:1fr 1fr;gap:40px;
+  align-items:start;margin-bottom:52px;
+}
+.avaliador-intro-text h2{
+  font-family:'Fraunces',serif;
+  font-size:clamp(1.3rem,2.6vw,2rem);font-weight:700;letter-spacing:-.02em;margin-bottom:10px;
+}
+.avaliador-intro-text p{font-size:.9rem;color:var(--sec);line-height:1.8;margin-bottom:20px}
+
+/* Var cards */
+.var-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.var-card{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:16px 18px;
+  display:flex;gap:12px;align-items:flex-start;transition:all .2s;
+}
+.var-card:hover{border-color:var(--border2);background:rgba(255,255,255,.05)}
+.var-badge{
+  flex-shrink:0;width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;font-family:'DM Mono',monospace;
+  font-size:14px;font-weight:500;
+}
+.var-badge.p{background:rgba(124,112,245,.15);color:#c4bfff}
+.var-badge.q{background:rgba(45,212,191,.15);color:#99f6e4}
+.var-badge.r{background:rgba(251,191,36,.15);color:#fde68a}
+.var-badge.s{background:rgba(248,113,113,.15);color:#fecaca}
+.var-info{}
+.var-lbl{font-size:.7rem;color:var(--muted);margin-bottom:2px;font-weight:400}
+.var-desc{font-size:.82rem;color:var(--text);line-height:1.4}
+
+/* Formula */
+.formula-box{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:18px 22px;
+  font-family:'DM Mono',monospace;font-size:13px;
+  color:var(--text);display:flex;flex-wrap:wrap;
+  gap:6px;align-items:center;margin-top:18px;
+}
+.formula-box .flbl{font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);width:100%;margin-bottom:4px;font-family:'Plus Jakarta Sans',sans-serif}
+.token-var{color:#c4bfff;font-weight:500}
+.token-and{color:var(--teal)}
+.token-or{color:var(--amber)}
+.token-paren{color:var(--muted)}
+.token-result{color:var(--red)}
+.token-eq{color:var(--sec)}
+
+/* Risk pills */
+.risk-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.risk-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 13px;border-radius:100px;font-size:.8rem;font-weight:500;
+}
+.risk-pill.low{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);color:#bbf7d0}
+.risk-pill.medium{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);color:#fde68a}
+.risk-pill.high{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:#fecaca}
+.rdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.rdot.low{background:var(--green)}.rdot.medium{background:var(--amber)}.rdot.high{background:var(--red)}
+
+/* Interactive table */
+.sec-label{
+  font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.interactive-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);overflow:hidden;margin-bottom:32px;
+  box-shadow:0 1px 3px rgba(0,0,0,.4),0 8px 32px rgba(0,0,0,.3);
+}
+.interactive-card:hover{border-color:var(--border2)}
+
+.itbl-wrap{overflow-x:auto}
+table.itbl{width:100%;border-collapse:separate;border-spacing:0;min-width:580px}
+.itbl thead th{
+  background:var(--bg);padding:13px 18px;
+  font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);text-align:left;
+}
+.itbl tbody tr{transition:background .15s}
+.itbl tbody tr:hover td{background:rgba(255,255,255,.02)}
+.itbl tbody td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:.88rem;vertical-align:middle}
+.itbl tbody tr:last-child td{border-bottom:none}
+
+.user-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.avatar.a{background:rgba(124,112,245,.2);color:#c4bfff}
+.avatar.b{background:rgba(45,212,191,.2);color:#99f6e4}
+.avatar.c{background:rgba(248,113,113,.2);color:#fecaca}
+
+.var-select{
+  appearance:none;background:var(--bg);
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-family:'DM Mono',monospace;font-size:.88rem;
+  padding:7px 12px;width:68px;cursor:pointer;text-align:center;
+  transition:border-color .15s,background .15s;
+}
+.var-select:hover{border-color:var(--border2)}
+.var-select:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,112,245,.12)}
+.var-select.true{color:var(--green)}
+.var-select.false{color:var(--muted)}
+
+.calc-bar{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:20px 24px;background:rgba(255,255,255,.02);
+  border-top:1px solid var(--border);
+}
+.btn-calc{
+  display:inline-flex;align-items:center;gap:9px;
+  background:linear-gradient(135deg,var(--purple),#6d28d9);
+  color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.88rem;font-weight:600;padding:12px 28px;
+  border:none;border-radius:100px;cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 20px rgba(124,112,245,.3);letter-spacing:.02em;
+}
+.btn-calc:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,112,245,.4)}
+.btn-calc:active{transform:translateY(0)}
+.calc-hint{font-size:.78rem;color:var(--muted)}
+
+.result-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:100px;font-size:.8rem;font-weight:500;
+  transition:all .3s ease;white-space:nowrap;
+}
+.result-badge.empty{background:rgba(255,255,255,.04);border:1px dashed var(--border);color:var(--muted)}
+.result-badge.low{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:#bbf7d0}
+.result-badge.medium{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:#fde68a}
+.result-badge.high{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#fecaca}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.result-badge.high{animation:shake .3s ease}
+
+/* Truth table full */
+.truth-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.4),0 8px 32px rgba(0,0,0,.3);
+}
+.truth-card:hover{border-color:var(--border2)}
+.truth-card-head{padding:22px 24px;border-bottom:1px solid var(--border)}
+.truth-card-head p{font-size:.82rem;color:var(--sec);line-height:1.65;font-weight:300}
+.tv-wrap{overflow-x:auto}
+table.tvtbl{width:100%;border-collapse:collapse;min-width:480px}
+.tvtbl thead th{
+  background:var(--bg);padding:12px 16px;
+  font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);text-align:left;
+}
+.tvtbl tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+.tvtbl tbody tr:last-child{border-bottom:none}
+.tvtbl tbody tr:hover{background:rgba(255,255,255,.02)}
+.tvtbl tbody tr.hi-row{background:rgba(248,113,113,.05)}
+.tvtbl tbody td{padding:10px 16px;font-size:.82rem;text-align:center;color:var(--sec)}
+.tvtbl tbody td:first-child{text-align:left;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)}
+.tv-t{color:var(--green);font-weight:700}
+.tv-f{color:var(--red);font-weight:700}
+.res-high{color:#fecaca;font-weight:600}.res-medium{color:#fde68a;font-weight:600}.res-low{color:#bbf7d0;font-weight:600}
+
+/* ══════════════════════════════════════
+   DISCLAIMER / FOOTER
+══════════════════════════════════════ */
+.disclaimer{
+  background:rgba(255,255,255,.025);border-top:1px solid var(--border);
+  padding:22px 7vw;font-size:.78rem;color:var(--muted);line-height:1.7;
+  position:relative;z-index:1;
+}
+.disclaimer strong{color:var(--sec)}
+
+footer.main-footer{
+  padding:44px 7vw;display:flex;flex-wrap:wrap;
+  justify-content:space-between;align-items:center;
+  gap:14px;border-top:1px solid var(--border);position:relative;z-index:1;
+}
+.ft-brand{font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;color:var(--text)}
+.ft-links{display:flex;gap:20px}
+.ft-link{font-size:.78rem;color:var(--muted);text-decoration:none;transition:color .18s}
+.ft-link:hover{color:var(--sec)}
+.ft-info{font-size:.75rem;color:var(--muted);text-align:right;line-height:1.7}
+
+/* ══════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.hero .pill,.hero h1,.hero-lead,.meta,.kpi{animation:fadeUp .55s ease both}
+.hero h1{animation-delay:.08s}.hero-lead{animation-delay:.17s}.meta{animation-delay:.26s}
+.kpi:nth-child(1){animation-delay:.05s}.kpi:nth-child(2){animation-delay:.12s}
+.kpi:nth-child(3){animation-delay:.19s}.kpi:nth-child(4){animation-delay:.26s}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media(max-width:900px){
+  .avaliador-intro{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .kpi{border-right:none;border-bottom:1px solid var(--border)}.kpi:last-child{border-bottom:none}
+  .var-grid{grid-template-columns:1fr}
+  .section-head p{text-align:left}
+  footer.main-footer{flex-direction:column;align-items:flex-start}.ft-info{text-align:left}
+  .nav-links,.nav-right .nav-badge{display:none}
+  .hamburger{display:flex}
+  .ctrl-bar{top:62px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══════════════════════════════════ -->
+<nav class="navbar">
+  <a href="#" class="nav-brand">
+    <span class="nav-brand-dot"></span>
+    ApostaWatch
+  </a>
+  <div class="nav-links">
+    <a href="#dados" class="nav-link active">Dados</a>
+    <a href="#avaliador" class="nav-link">Avaliador de Risco</a>
+    <a href="#tabela-verdade" class="nav-link">Tabela-Verdade</a>
+    <a href="#sobre" class="nav-link">Sobre</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-badge"><span class="nav-badge-dot"></span>Dados 2025</div>
+  </div>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#dados" class="mobile-link">Dados</a>
+  <a href="#avaliador" class="mobile-link">Avaliador de Risco</a>
+  <a href="#tabela-verdade" class="mobile-link">Tabela-Verdade</a>
+  <a href="#sobre" class="mobile-link">Sobre</a>
+</div>
+
+<!-- ═══ HERO ═════════════════════════════════════ -->
+<header class="hero" id="inicio">
+  <div class="hero-glow"></div>
+  <div class="pill"><span class="pill-dot"></span>Lógica &amp; Matemática Discreta · UNDB 2026.1</div>
+  <h1>Vício em <em>apostas</em><br>no Brasil</h1>
+  <p class="hero-lead">Uma análise dos padrões socioeconômicos do comportamento compulsivo em plataformas de bets, cruzando faixa etária, gasto mensal, tendência histórica e índice de risco para identificar perfis de vulnerabilidade.</p>
+  <div class="meta">
+    <span>Desafio 4.0 — UA I</span>
+    <span>Tema: Vício em Apostas</span>
+    <span>Fonte: Anbima — Raio X do Investidor Brasileiro, 2025</span>
+  </div>
+</header>
+
+<!-- ═══ KPIs ══════════════════════════════════════ -->
+<section class="kpi-strip">
+  <div class="kpi"><div class="kpi-bar" style="background:var(--r)"></div><div class="kpi-val" style="color:var(--r)">17%</div><div class="kpi-lbl">Apostaram online em 2025 (eram 14% em 2023)</div></div>
+  <div class="kpi"><div class="kpi-bar" style="background:var(--y)"></div><div class="kpi-val" style="color:var(--y)">69%</div><div class="kpi-lbl">Dos jovens de 18–29 anos já apostaram</div></div>
+  <div class="kpi"><div class="kpi-bar" style="background:var(--r)"></div><div class="kpi-val" style="color:var(--r)">11%</div><div class="kpi-lbl">Classificados como jogadores problemáticos</div></div>
+  <div class="kpi"><div class="kpi-bar" style="background:var(--b)"></div><div class="kpi-val" style="color:var(--b)">37%</div><div class="kpi-lbl">Gastam R$100 ou mais por mês em apostas</div></div>
+</section>
+
+<!-- ═══ GRÁFICOS ══════════════════════════════════ -->
+<section id="dados">
+  <div class="section-head">
+    <h2>Análise de dados</h2>
+    <p>Use os botões ou setas para navegar entre os gráficos.</p>
+  </div>
+
+  <div class="ctrl-bar">
+    <div class="slide-tabs">
+      <button class="tab-btn active" onclick="go(0)">Faixa Etária</button>
+      <button class="tab-btn" onclick="go(1)">Gasto Mensal</button>
+      <button class="tab-btn" onclick="go(2)">Tendência</button>
+      <button class="tab-btn" onclick="go(3)">Risco PGSI</button>
+    </div>
+    <span class="slide-counter" id="counter">1 / 4</span>
+    <div class="arrows">
+      <button class="arrow-btn" id="prev" title="Anterior">&#8592;</button>
+      <button class="arrow-btn" id="next" title="Próximo">&#8594;</button>
+    </div>
+  </div>
+
+  <div class="slideshow">
+    <div class="slides-track" id="track">
+
+      <!-- S1: FAIXA ETÁRIA -->
+      <div class="slide">
+        <div class="slide-inner">
+          <h3 class="slide-title">Apostadores por faixa etária</h3>
+          <p class="slide-desc">Percentual de brasileiros que afirmaram ter apostado online ao menos uma vez. Jovens de 18–29 anos lideram com 69%, indicando forte concentração nas gerações mais novas.</p>
+          <div class="chart-box">
+            <div class="chart-wrap sm"><canvas id="c1"></canvas></div>
+          </div>
+          <p class="src-note">Fonte: Raio X do Investidor Brasileiro — Anbima, 2025</p>
+        </div>
+      </div>
+
+      <!-- S2: GASTO MENSAL -->
+      <div class="slide">
+        <div class="slide-inner">
+          <h3 class="slide-title">Gasto mensal com bets</h3>
+          <p class="slide-desc">Distribuição por faixa de gasto mensal — comparativo 2024 × 2025. A maior parcela (37% em 2025) gasta R$100 ou mais por mês.</p>
+          <div class="chart-box">
+            <div class="legend">
+              <div class="li"><div class="ldot" style="background:#f5b731"></div>2024</div>
+              <div class="li"><div class="ldot" style="background:#e06820"></div>2025</div>
+            </div>
+            <div class="chart-wrap"><canvas id="c2"></canvas></div>
+          </div>
+          <p class="src-note">Fonte: Raio X do Investidor Brasileiro — Anbima, 2025</p>
+        </div>
+      </div>
+
+      <!-- S3: TENDÊNCIA -->
+      <div class="slide">
+        <div class="slide-inner">
+          <h3 class="slide-title">Tendência histórica de apostas online</h3>
+          <p class="slide-desc">O percentual de apostadores cresceu de 14% em 2023 para 17% em 2025 — um aumento de 21% em três anos consecutivos.</p>
+          <div class="chart-box">
+            <div class="chart-wrap"><canvas id="c3"></canvas></div>
+          </div>
+          <div class="badge-row">
+            <div class="badge"><div class="badge-val">+21%</div><div class="badge-lbl">Crescimento total em 3 anos</div></div>
+            <div class="badge"><div class="badge-val">83%</div><div class="badge-lbl">Nunca apostaram (2025)</div></div>
+            <div class="badge"><div class="badge-val">63%</div><div class="badge-lbl">Nunca apostaram (2024)</div></div>
+          </div>
+          <p class="src-note">Fonte: Raio X do Investidor Brasileiro — Anbima, 2025</p>
+        </div>
+      </div>
+
+      <!-- S4: PGSI -->
+      <div class="slide">
+        <div class="slide-inner">
+          <h3 class="slide-title">Classificação de risco — PGSI</h3>
+          <p class="slide-desc">Distribuição dos apostadores nas categorias do Problem Gambling Severity Index — comparativo 2024 × 2025.</p>
+          <div class="chart-box">
+            <div class="legend">
+              <div class="li"><div class="ldot" style="background:#f5b731"></div>2024</div>
+              <div class="li"><div class="ldot" style="background:#e06820"></div>2025</div>
+            </div>
+            <div class="chart-wrap"><canvas id="c4"></canvas></div>
+          </div>
+          <div class="alert-box"><strong>⚠ Atenção:</strong> 11% dos apostadores são jogadores problemáticos em 2025 — alta de 1 p.p. Os de risco moderado subiram de 26% para 28%.</div>
+          <p class="src-note">Fonte: Anbima / PGSI — Raio X do Investidor Brasileiro, 2025</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ AVALIADOR DE RISCO ════════════════════════ -->
+<section class="avaliador-section" id="avaliador">
+
+  <!-- Intro + variáveis -->
+  <div class="avaliador-intro">
+    <div class="avaliador-intro-text">
+      <h2>Avaliador de risco lógico</h2>
+      <p>Com base nos comportamentos mapeados pelos dados, este avaliador aplica lógica proposicional para classificar o nível de risco de um apostador. Defina os valores de P, Q, R e S na tabela ao lado e calcule o resultado.</p>
+
+      <div class="formula-box">
+        <span class="flbl">Expressão lógica principal</span>
+        <span class="token-result">Risco Alto</span>
+        <span class="token-eq">=</span>
+        <span class="token-paren">(</span>
+        <span class="token-var">P</span>
+        <span class="token-and">∧</span>
+        <span class="token-var">S</span>
+        <span class="token-paren">)</span>
+        <span class="token-or">∨</span>
+        <span class="token-paren">(</span>
+        <span class="token-var">Q</span>
+        <span class="token-and">∧</span>
+        <span class="token-var">R</span>
+        <span class="token-paren">)</span>
+      </div>
+
+      <div class="risk-pills" style="margin-top:16px">
+        <span class="risk-pill low"><span class="rdot low"></span>Baixo risco</span>
+        <span class="risk-pill medium"><span class="rdot medium"></span>Atenção</span>
+        <span class="risk-pill high"><span class="rdot high"></span>Alto risco</span>
+      </div>
+    </div>
+
+    <div class="var-grid">
+      <div class="var-card">
+        <div class="var-badge p">P</div>
+        <div class="var-info">
+          <div class="var-lbl">Proposição P</div>
+          <div class="var-desc">Aposta mais do que pode perder</div>
+        </div>
+      </div>
+      <div class="var-card">
+        <div class="var-badge q">Q</div>
+        <div class="var-info">
+          <div class="var-lbl">Proposição Q</div>
+          <div class="var-desc">Sente culpa ao apostar</div>
+        </div>
+      </div>
+      <div class="var-card">
+        <div class="var-badge r">R</div>
+        <div class="var-info">
+          <div class="var-lbl">Proposição R</div>
+          <div class="var-desc">Aumenta o valor das apostas progressivamente</div>
+        </div>
+      </div>
+      <div class="var-card">
+        <div class="var-badge s">S</div>
+        <div class="var-info">
+          <div class="var-lbl">Proposição S</div>
+          <div class="var-desc">Tenta recuperar perdas apostando mais</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela interativa -->
+  <p class="sec-label">Simulador interativo</p>
+  <div class="interactive-card">
+    <div class="itbl-wrap">
+      <table class="itbl">
+        <thead>
+          <tr>
+            <th>Perfil</th>
+            <th>P — Aposta além do limite</th>
+            <th>Q — Sente culpa</th>
+            <th>R — Escalada de valores</th>
+            <th>S — Persegue perdas</th>
+            <th>Classificação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="user-cell"><div class="avatar a">U1</div><span>Usuário 1</span></div></td>
+            <td><select class="var-select false" data-user="a" data-var="p" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="a" data-var="q" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="a" data-var="r" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="a" data-var="s" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td id="result-a"><span class="result-badge empty">—</span></td>
+          </tr>
+          <tr>
+            <td><div class="user-cell"><div class="avatar b">U2</div><span>Usuário 2</span></div></td>
+            <td><select class="var-select false" data-user="b" data-var="p" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="b" data-var="q" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="b" data-var="r" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="b" data-var="s" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td id="result-b"><span class="result-badge empty">—</span></td>
+          </tr>
+          <tr>
+            <td><div class="user-cell"><div class="avatar c">U3</div><span>Usuário 3</span></div></td>
+            <td><select class="var-select false" data-user="c" data-var="p" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="c" data-var="q" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="c" data-var="r" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td><select class="var-select false" data-user="c" data-var="s" onchange="syncSelect(this)"><option value="F">F</option><option value="V">V</option></select></td>
+            <td id="result-c"><span class="result-badge empty">—</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="calc-bar">
+      <button class="btn-calc" onclick="calcularTodos()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Calcular risco
+      </button>
+      <span class="calc-hint">Selecione V ou F para cada proposição e clique em calcular.</span>
+    </div>
+  </div>
+
+  <!-- Tabela-verdade completa -->
+  <p class="sec-label" id="tabela-verdade">Tabela-verdade completa — 16 combinações</p>
+  <div class="truth-card">
+    <div class="truth-card-head">
+      <p>Todas as 16 combinações possíveis de valores para P, Q, R e S com o resultado da expressão lógica <strong style="color:var(--text);font-family:'DM Mono',monospace">(P∧S) ∨ (Q∧R)</strong> e a classificação de risco correspondente.</p>
+    </div>
+    <div class="tv-wrap">
+      <table class="tvtbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>P</th><th>Q</th><th>R</th><th>S</th>
+            <th>(P∧S)</th><th>(Q∧R)</th>
+            <th>Resultado</th>
+            <th>Classificação</th>
+          </tr>
+        </thead>
+        <tbody id="tvBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══ SOBRE ══════════════════════════════════════ -->
+<section id="sobre" style="padding:52px 7vw;border-top:1px solid var(--border);position:relative;z-index:1">
+  <div style="max-width:720px">
+    <h2 style="font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:12px">Sobre este projeto</h2>
+    <p style="font-size:.88rem;color:var(--sec);line-height:1.85;margin-bottom:10px">Este dashboard foi desenvolvido como produto tecnológico do Desafio 4.0 da disciplina de Lógica e Matemática Discreta (UNDB, 2026.1). O objetivo é demonstrar como conceitos de lógica proposicional, tabelas-verdade e análise de dados podem ser aplicados a problemas socioeconômicos reais.</p>
+    <p style="font-size:.88rem;color:var(--sec);line-height:1.85">Os dados são baseados na pesquisa <em>Raio X do Investidor Brasileiro</em> da Anbima (2025) e o modelo de avaliação de risco utiliza como referência o <em>Problem Gambling Severity Index</em> (PGSI), adaptado de forma simplificada para fins educacionais.</p>
+  </div>
+</section>
+
+<!-- ═══ DISCLAIMER ════════════════════════════════ -->
+<div class="disclaimer">
+  <strong>Aviso educacional:</strong> Este sistema é um protótipo com fins acadêmicos, desenvolvido para ilustrar a aplicação de lógica proposicional à identificação de comportamentos de risco. Não substitui diagnóstico clínico. Em caso de suspeita de problema com apostas, consulte um profissional de saúde.
+</div>
+
+<!-- ═══ FOOTER ════════════════════════════════════ -->
+<footer class="main-footer">
+  <div class="ft-brand">ApostaWatch</div>
+  <div class="ft-links">
+    <a href="#dados" class="ft-link">Dados</a>
+    <a href="#avaliador" class="ft-link">Avaliador</a>
+    <a href="#sobre" class="ft-link">Sobre</a>
+  </div>
+  <div class="ft-info">
+    Desafio 4.0 — Lógica e Matemática Discreta · UNDB 2026.1<br>
+    Prof. Leonardo Henrique Silva Lago
+  </div>
+</footer>
+
+<!-- ═══ SCRIPTS ═══════════════════════════════════ -->
+<script>
+/* ── CHARTS ── */
+Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+Chart.defaults.color = '#c5c2ba';
+
+const LBL = {id:'lbl',afterDatasetsDraw(chart){
+  const {ctx}=chart;
+  chart.data.datasets.forEach((ds,di)=>{
+    chart.getDatasetMeta(di).data.forEach((el,i)=>{
+      ctx.save();ctx.fillStyle='#f0eee9';
+      ctx.font='700 12px "Plus Jakarta Sans",sans-serif';
+      ctx.textAlign='center';ctx.fillText(ds.data[i]+'%',el.x,el.y-9);ctx.restore();
+    });
+  });
+}};
+
+const TIP={backgroundColor:'#1b1b28',titleColor:'#f0eee9',bodyColor:'#c5c2ba',borderColor:'rgba(255,255,255,.12)',borderWidth:1,padding:13,cornerRadius:10};
+const scX={ticks:{color:'#7a7888',font:{size:11,weight:'500'}},grid:{display:false},border:{display:false}};
+const scY=(max)=>({min:0,max,ticks:{color:'#5a5868',callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'},border:{display:false}});
+
+new Chart(document.getElementById('c1'),{type:'bar',
+  data:{labels:['18–29 anos','30–49 anos','50 anos ou mais'],datasets:[{data:[69,58,57],backgroundColor:['#2dd4a8','#6c8fff','#f5b731'],borderRadius:9,borderSkipped:false,barPercentage:.5}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TIP,callbacks:{label:c=>` ${c.parsed.y}%`}}},scales:{x:scX,y:scY(90)}},plugins:[LBL]});
+
+new Chart(document.getElementById('c2'),{type:'bar',
+  data:{labels:['R$1–R$30','R$31–R$49','R$50–R$99','R$100+','Recusa/NS'],datasets:[
+    {label:'2024',data:[33,3,17,39,8],backgroundColor:'#f5b731',borderRadius:7,borderSkipped:false,barPercentage:.42},
+    {label:'2025',data:[36,3,17,37,7],backgroundColor:'#e06820',borderRadius:7,borderSkipped:false,barPercentage:.42}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TIP,callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y}%`}}},scales:{x:scX,y:scY(52)}},plugins:[LBL]});
+
+(()=>{
+  const cvs=document.getElementById('c3'),gctx=cvs.getContext('2d');
+  const grad=gctx.createLinearGradient(0,0,0,310);
+  grad.addColorStop(0,'rgba(108,143,255,.22)');grad.addColorStop(1,'rgba(108,143,255,.0)');
+  new Chart(cvs,{type:'line',
+    data:{labels:['2023','2024','2025'],datasets:[{data:[14,15,17],borderColor:'#6c8fff',backgroundColor:grad,borderWidth:3.5,pointBackgroundColor:'#6c8fff',pointBorderColor:'#14141e',pointBorderWidth:3,pointRadius:9,pointHoverRadius:11,tension:.38,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TIP,callbacks:{label:c=>` ${c.parsed.y}%`}}},scales:{x:scX,y:{min:10,max:22,ticks:{color:'#5a5868',callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'},border:{display:false}}}},plugins:[LBL]});
+})();
+
+new Chart(document.getElementById('c4'),{type:'bar',
+  data:{labels:['Problemáticos\n(≥8 pts)','Risco moderado\n(3–7 pts)','Baixo risco\n(1–2 pts)','Sem problemas\n(0 ponto)'],datasets:[
+    {label:'2024',data:[10,26,28,35],backgroundColor:'#f5b731',borderRadius:7,borderSkipped:false,barPercentage:.4},
+    {label:'2025',data:[11,28,29,32],backgroundColor:'#e06820',borderRadius:7,borderSkipped:false,barPercentage:.4}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TIP,callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y}%`}}},scales:{x:{...scX,ticks:{...scX.ticks,font:{size:9,weight:'500'}}},y:scY(45)}},plugins:[LBL]});
+
+/* ── SLIDESHOW ── */
+const track=document.getElementById('track');
+const slides=track.querySelectorAll('.slide');
+const tabs=document.querySelectorAll('.tab-btn');
+const counter=document.getElementById('counter');
+let cur=0;
+const total=slides.length;
+
+function go(n){
+  cur=((n%total)+total)%total;
+  track.style.transform=`translateX(-${cur*100}%)`;
+  tabs.forEach((b,i)=>b.classList.toggle('active',i===cur));
+  counter.textContent=`${cur+1} / ${total}`;
+}
+document.getElementById('prev').addEventListener('click',()=>go(cur-1));
+document.getElementById('next').addEventListener('click',()=>go(cur+1));
+document.addEventListener('keydown',e=>{
+  if(document.activeElement.tagName==='SELECT') return;
+  if(e.key==='ArrowRight') go(cur+1);
+  if(e.key==='ArrowLeft')  go(cur-1);
+});
+
+/* ── MOBILE MENU ── */
+document.getElementById('hamburger').addEventListener('click',()=>{
+  document.getElementById('mobileMenu').classList.toggle('open');
+});
+document.querySelectorAll('.mobile-link').forEach(l=>{
+  l.addEventListener('click',()=>document.getElementById('mobileMenu').classList.remove('open'));
+});
+
+/* ── NAV ACTIVE ON SCROLL ── */
+const sections=['inicio','dados','avaliador','sobre'];
+const navLinks=document.querySelectorAll('.nav-link');
+window.addEventListener('scroll',()=>{
+  const scrollY=window.scrollY+120;
+  sections.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(scrollY>=el.offsetTop) navLinks.forEach((l,j)=>l.classList.toggle('active',j===i));
+  });
+},{passive:true});
+
+/* ── AVALIADOR DE RISCO — LÓGICA ── */
+function avaliarRiscoAlto(P,Q,R,S){ return (P&&S)||(Q&&R); }
+function contarVerdadeiros(vars){ return vars.filter(Boolean).length; }
+function calcularRisco(P,Q,R,S){
+  if(avaliarRiscoAlto(P,Q,R,S)) return {nivel:'high',  label:'Alto risco'};
+  if(contarVerdadeiros([P,Q,R,S])>=2) return {nivel:'medium',label:'Atenção'};
+  return {nivel:'low',label:'Baixo risco'};
+}
+
+function lerValores(userId){
+  const ler=v=>{ const el=document.querySelector(`select[data-user="${userId}"][data-var="${v}"]`); return el?el.value==='V':false; };
+  return {P:ler('p'),Q:ler('q'),R:ler('r'),S:ler('s')};
+}
+
+function renderResultado(userId,res){
+  const cell=document.getElementById(`result-${userId}`);
+  if(!cell) return;
+  const dot=`<span class="rdot ${res.nivel}" style="display:inline-block"></span>`;
+  cell.innerHTML=`<span class="result-badge ${res.nivel}">${dot} ${res.label}</span>`;
+}
+
+function syncSelect(sel){ sel.className='var-select '+(sel.value==='V'?'true':'false'); }
+
+function calcularTodos(){
+  ['a','b','c'].forEach(uid=>{
+    const {P,Q,R,S}=lerValores(uid);
+    renderResultado(uid,calcularRisco(P,Q,R,S));
+  });
+}
+
+/* ── TABELA VERDADE GERADA DINAMICAMENTE ── */
+function gerarTabela(){
+  const tbody=document.getElementById('tvBody');
+  if(!tbody) return;
+  let html='',row=0;
+  for(let p=0;p<=1;p++) for(let q=0;q<=1;q++) for(let r=0;r<=1;r++) for(let s=0;s<=1;s++){
+    row++;
+    const P=Boolean(p),Q=Boolean(q),R=Boolean(r),S=Boolean(s);
+    const pAndS=P&&S, qAndR=Q&&R;
+    const res=calcularRisco(P,Q,R,S);
+    const t=v=>v?'<td class="tv-t">V</td>':'<td class="tv-f">F</td>';
+    const rc=res.nivel==='high'?'res-high':res.nivel==='medium'?'res-medium':'res-low';
+    const hi=res.nivel==='high'?'hi-row':'';
+    html+=`<tr class="${hi}">
+      <td>${String(row).padStart(2,'0')}</td>
+      ${t(P)}${t(Q)}${t(R)}${t(S)}
+      ${t(pAndS)}${t(qAndR)}
+      <td class="${rc}">${res.nivel==='high'?'Verdadeiro':'Falso'}</td>
+      <td><span class="result-badge ${res.nivel}" style="font-size:.75rem;padding:4px 10px">
+        <span class="rdot ${res.nivel}" style="display:inline-block;width:6px;height:6px"></span>
+        ${res.label}
+      </span></td>
+    </tr>`;
+  }
+  tbody.innerHTML=html;
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  gerarTabela();
+  document.querySelectorAll('.var-select').forEach(syncSelect);
+});
+</script>
+</body>
+</html>
